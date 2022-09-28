@@ -6,6 +6,8 @@ import time
 import sys
 import copy
 from threading import Thread
+from time import perf_counter
+
 
 from Cff.Api.Feed.ObjectType import *
 from Cff.Api.Feed.VehicleType import *
@@ -20,6 +22,7 @@ from Cff.Api.Feed.Input import *
 
 def inject(config, obj_data):
 
+    start_time = perf_counter()
     builder = flatbuffers.Builder(1024)
 
     DimensionsStart(builder)
@@ -54,6 +57,9 @@ def inject(config, obj_data):
     # send data over UDP
     sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)  # UDP
     sock.sendto(data, (config.ip, config.port))
+
+    end_time = perf_counter()
+    print(f" Inject Execution Time  in Miliseconds: {end_time*1000 - start_time*1000:0.6f}" )
 
     #print(f'Object injected with ID {obj_data.id} lat {obj_data.lat} lon {obj_data.lon} hdg {obj_data.heading}')
 
@@ -105,13 +111,13 @@ if __name__ == "__main__":
 
     builder = ObjectFeedBuilder((37.348237, -122.045452), (37.348137, -122.046652), 300)
 
-    start_time = time.perf_counter_ns()
+    start_time = perf_counter()
     skeleton = ObjectFeedData(ObjectType().Cyclist, speed=3, heading=270)
     skeleton2 = ObjectFeedData(ObjectType().Pedestrian, speed=3, heading=270)
-    end_time = time.perf_counter_ns()
-    print(f"Skelaton Object Build Time in Nanoseconds : {end_time - start_time}" )
+    end_time = perf_counter()
+    print(f" Build Skelaton Objects Time in Miliseconds: {end_time*1000 - start_time*1000:0.6f}" )
 
-    start_time = time.perf_counter()
+    start_time = perf_counter()
     injects = []
     injects += [builder.generate(1, skeleton)]
     injects += [builder.generate(2, skeleton2, 0, 0.0005)]
@@ -119,16 +125,16 @@ if __name__ == "__main__":
     injects += [builder.generate(4, skeleton2, 0, 0.0015)]
     injects += [builder.generate(5, skeleton, 0, 0.0020)]
     injects += [builder.generate(6, skeleton2, 0, 0.0025)]
-    end_time = time.perf_counter()
+    end_time = perf_counter()
     print(f" Inject Build Skelaton Objects Time in Miliseconds: {end_time*1000 - start_time*1000:0.6f}" )
     
     for data in zip(*injects):
         time.sleep(config.timestep)
-        start_time = time.perf_counter()
+        #start_time = perf_counter()
         for d in data:
             inject(config, d)
-        end_time = time.perf_counter()
-        print(f" Inject Execution Time  in Miliseconds: {end_time*1000 - start_time*1000:0.6f}" )
+        #end_time = perf_counter()
+        #print(f" Inject Execution Time  in Miliseconds: {end_time*1000 - start_time*1000:0.6f}" )
 
 
 # west: 37.348237, -122.045452
